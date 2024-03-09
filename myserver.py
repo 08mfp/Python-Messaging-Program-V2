@@ -1,3 +1,20 @@
+#########################################################################################
+# MOHAMED FARID PATEL
+#########################################################################################
+"""
+Once the server is running, you can also use 'telnet localhost portnumber' to connect to the server. (use the same portnumber as the server). e.g. telnet localhost 7090.
+You can also use the myclient.py to connect to the server. (use the same portnumber as the server). e.g. python3 myclient.py localhost 7090.
+Once you enter a valid username, you can start sending messages to the server.
+Your available commands are:
+    /DISCONNECT - to disconnect from the server
+    /HELP - to get a list of commands that you can use
+    /USERS - to get a list of users that are currently connected to the server
+    /PM - to send a private message to a specific user.
+    /GROUPMESSAGE - to send a message to a group of users.
+    /SENDALL - to send a message to all users (and the server).
+    /CHANGEUSERNAME - to change your username.
+"""
+#########################################################################################
 from ex2utils import Server
 import sys
 
