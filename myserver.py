@@ -1,5 +1,6 @@
 #########################################################################################
-# MOHAMED FARID PATEL
+# COMP28112 - LAB 2
+# MOHAMED FARID PATEL - e60822mp
 #########################################################################################
 """
 Once the server is running, you can also use 'telnet localhost portnumber' to connect to the server. (use the same portnumber as the server). e.g. telnet localhost 7090.
@@ -13,6 +14,8 @@ Your available commands are:
     /GROUPMESSAGE - to send a message to a group of users.
     /SENDALL - to send a message to all users (and the server).
     /CHANGEUSERNAME - to change your username.
+
+   ** Doing ctrl + ] and crtl + Z in a telnet client without entering the /disconnect command will not disconnect the client from the server. (it just suspends the telnet client). 
 """
 #########################################################################################
 from ex2utils import Server
@@ -87,6 +90,7 @@ class MyServer(Server):
             del self.currentuserstatus[socket]
         elif socket in self.currentuserstatus and self.currentuserstatus[socket][0] == "sendtoall":
             self.sendall("{}: {}".format(self.socketusernames[socket], message), exclude=socket)
+            self.send(socket, "Message sent to all users.")
             del self.currentuserstatus[socket]
         elif socket in self.currentuserstatus and self.currentuserstatus[socket][0] == "selectmembers":
             receivers = []
@@ -110,7 +114,8 @@ class MyServer(Server):
                         socketofreceiver = receiversocket
                         break
                 self.send(socketofreceiver, "Broadcast Message From {}: {}".format(self.socketusernames[socket], message))
-                print("{} sent a group message to {}, message: {}".format(self.socketusernames[socket], socketofreceiver, message))
+                print("{} sent a group message to {}, message: {}".format(self.socketusernames[socket], self.socketusernames[socketofreceiver], message))
+            self.send(socket, "Message sent to users.")
             del self.currentuserstatus[socket]
         elif socket in self.currentuserstatus and self.currentuserstatus[socket] == "updateusername":
             newusername = message.strip()
@@ -123,13 +128,14 @@ class MyServer(Server):
                 self.send(socket, "your new username is {}.".format(newusername))
                 del self.currentuserstatus[socket]
         else:
-            self.allfeatures(socket, message)
+            self.allfeatures(socket, message) #Used to handle processing commands.
         return True
 
     def allfeatures(self, socket, message):
         """ All commands that connected clients are able to use. """
-        words = message.strip().split(' ', 1)
+        words = message.strip().split(' ', 1) # this is passed into the onmessage function.
         command = words[0].upper() # I use this to get the command from the user
+        self.send(socket, "Server has recieved your request: " + message.strip()) #Client side validation (in final task)
         if command == "/DISCONNECT" or command == "/DISCONNECT/" :
             print(" User {} entered /DISCONNECT".format(self.socketusernames[socket]))
             self.onDisconnect(socket)
