@@ -1,6 +1,5 @@
 #########################################################################################
-# COMP28112 - LAB 2
-# MOHAMED FARID PATEL - e60822mp
+# MOHAMED FARID PATEL
 #########################################################################################
 """
 Once the server is running, you can also use 'telnet localhost portnumber' to connect to the server. (use the same portnumber as the server). e.g. telnet localhost 7090.
