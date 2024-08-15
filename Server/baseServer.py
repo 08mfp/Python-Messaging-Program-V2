@@ -38,7 +38,7 @@ implementing some or all of the following five events.
 """
 
 import sys
-from ex2utils import Server
+from Server.serverInit import Server
 
 
 # Create an echo server class
@@ -62,8 +62,6 @@ class EchoServer(Server):
 		# Signify all is well
 		return True
 		  
-
-
 
 
 # Create an ego server class

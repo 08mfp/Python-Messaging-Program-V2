@@ -1,27 +1,14 @@
-#########################################################################################
-# MOHAMED FARID PATEL
-#########################################################################################
-"""
-Once the server is running, you can also use 'telnet localhost portnumber' to connect to the server. (use the same portnumber as the server). e.g. telnet localhost 7090.
-You can also use the myclient.py to connect to the server. (use the same portnumber as the server). e.g. python3 myclient.py localhost 7090.
-Once you enter a valid username, you can start sending messages to the server.
-Your available commands are:
-    /DISCONNECT - to disconnect from the server
-    /HELP - to get a list of commands that you can use
-    /USERS - to get a list of users that are currently connected to the server
-    /PM - to send a private message to a specific user.
-    /GROUPMESSAGE - to send a message to a group of users.
-    /SENDALL - to send a message to all users (and the server).
-    /CHANGEUSERNAME - to change your username.
-
-   ** Doing ctrl + ] and crtl + Z in a telnet client without entering the /disconnect command will not disconnect the client from the server. (it just suspends the telnet client). 
-"""
-#########################################################################################
-from ex2utils import Server
 import sys
+import os
+import tkinter as tk
+from tkinter import scrolledtext
+import threading
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from Server.serverInit import Server
 
 class MyServer(Server):
-    def __init__(self):
+    def __init__(self, gui=None):
         """ Initialize the server. """
         super().__init__()
         self.totalconnectedusers = 0
@@ -29,10 +16,18 @@ class MyServer(Server):
         self.socketusernames = {}
         self.currentuserstatus = {}
         self.notregistered = set()
+        self.gui = gui
 
     def onStart(self):
-        """ Called when the server starts. Prints message to server console only """
-        print("SERVER STARTED AND RUNNING.")
+        """ Called when the server starts. Prints message to server console and GUI """
+        message = "SERVER STARTED AND RUNNING."
+        self.log_message(message)
+
+    def log_message(self, message):
+        """ Log a message to the console and the GUI (if available) """
+        print(message)
+        if self.gui:
+            self.gui.write_message(message)
 
     def onConnect(self, socket):
         """ Called when a new client connects to the server. """
@@ -49,10 +44,10 @@ class MyServer(Server):
         for client_socket in self.trackedsockets:
             if client_socket != exclude:
                 self.send(client_socket, message)
-        print(message)
+        self.log_message(message)
 
     def onMessage(self, socket, message):
-        """ Main handling of message handling states and commands. allfeatures() is called if no state is found. allfeatures() commands call onMessage() to set states."""
+        """ Handle incoming messages from clients. """
         if socket in self.notregistered:
             usernameinput = message.strip()
             if usernameinput in self.socketusernames.values():
@@ -61,13 +56,10 @@ class MyServer(Server):
                 self.socketusernames[socket] = usernameinput
                 self.notregistered.remove(socket)
                 self.totalconnectedusers += 1
-                self.send(socket, "Welcome {}. Total users: {} ".format(usernameinput, len(self.trackedsockets)))# I changed the totalconnectedusers to len(self.trackedsockets) 
-                #to fix a bug when using myclient.py (so it is different to the PDF's protocol design).
-                # self.send(socket, "Your socket: {}".format(socket)) 
+                self.send(socket, "Welcome {}. Total users: {} ".format(usernameinput, len(self.trackedsockets)))
                 self.send(socket, "Available commands: /DISCONNECT, /USERS, /SENDALL, /PM, /GROUPMESSAGE, /CHANGEUSERNAME, /HELP\n")
                 self.send(socket, "You can now start chatting: ")
-                self.sendall("{} joined the chat. Total users: {}".format(usernameinput, len(self.trackedsockets)), exclude=socket) # I changed the totalconnectedusers to len(self.trackedsockets) 
-                #to fix a bug when using myclient.py (so it is different to the PDF's protocol design).
+                self.sendall("{} joined the chat. Total users: {}".format(usernameinput, len(self.trackedsockets)), exclude=socket)
         elif socket in self.currentuserstatus and self.currentuserstatus[socket] == "enterreceiver":
             receiver = message.strip()
             if receiver in self.socketusernames.values():
@@ -75,7 +67,7 @@ class MyServer(Server):
                 self.send(socket, "Enter The message you want to send:")
             else:
                 self.send(socket, "You can only message connected users:")
-                self.send(socket, "Connected users: " + ', '.join(self.socketusernames.values())) #! IF THERE IS ERROR REMOVE TJIS
+                self.send(socket, "Connected users: " + ', '.join(self.socketusernames.values()))
                 self.send(socket, "Enter the username of the receiver:")
         elif socket in self.currentuserstatus and self.currentuserstatus[socket][0] == "entermessage":
             usernameofreceiver = self.currentuserstatus[socket][1]
@@ -85,7 +77,7 @@ class MyServer(Server):
                     socketofreceiver = receiversocket
                     break
             self.send(socketofreceiver, "Private Message From {}: {}".format(self.socketusernames[socket], message))
-            print("{} sent a private message to {}, message: {}".format(self.socketusernames[socket], usernameofreceiver, message))
+            self.log_message("{} sent a private message to {}, message: {}".format(self.socketusernames[socket], usernameofreceiver, message))
             del self.currentuserstatus[socket]
         elif socket in self.currentuserstatus and self.currentuserstatus[socket][0] == "sendtoall":
             self.sendall("{}: {}".format(self.socketusernames[socket], message), exclude=socket)
@@ -113,7 +105,7 @@ class MyServer(Server):
                         socketofreceiver = receiversocket
                         break
                 self.send(socketofreceiver, "Broadcast Message From {}: {}".format(self.socketusernames[socket], message))
-                print("{} sent a group message to {}, message: {}".format(self.socketusernames[socket], self.socketusernames[socketofreceiver], message))
+                self.log_message("{} sent a group message to {}, message: {}".format(self.socketusernames[socket], self.socketusernames[socketofreceiver], message))
             self.send(socket, "Message sent to users.")
             del self.currentuserstatus[socket]
         elif socket in self.currentuserstatus and self.currentuserstatus[socket] == "updateusername":
@@ -127,38 +119,39 @@ class MyServer(Server):
                 self.send(socket, "your new username is {}.".format(newusername))
                 del self.currentuserstatus[socket]
         else:
-            self.allfeatures(socket, message) #Used to handle processing commands.
+            self.allfeatures(socket, message)
+
         return True
 
     def allfeatures(self, socket, message):
         """ All commands that connected clients are able to use. """
-        words = message.strip().split(' ', 1) # this is passed into the onmessage function.
-        command = words[0].upper() # I use this to get the command from the user
-        self.send(socket, "Server has recieved your request: " + message.strip()) #Client side validation (in final task)
-        if command == "/DISCONNECT" or command == "/DISCONNECT/" :
-            print(" User {} entered /DISCONNECT".format(self.socketusernames[socket]))
+        words = message.strip().split(' ', 1)  
+        command = words[0].upper()  
+        self.send(socket, "Server has received your request: " + message.strip())  
+        if command == "/DISCONNECT" or command == "/DISCONNECT/":
+            self.log_message(f" User {self.socketusernames[socket]} entered /DISCONNECT")
             self.onDisconnect(socket)
-        elif command == "/USERS" or command == "/USERS/" :
-            print(" User {} entered /USERS".format(self.socketusernames[socket]))
+        elif command == "/USERS" or command == "/USERS/":
+            self.log_message(f" User {self.socketusernames[socket]} entered /USERS")
             self.send(socket, "Connected users: " + ', '.join(self.socketusernames.values()))
         elif command == "/SENDALL" or command == "/SENDALL/":
-            print(" User {} entered /SENDALL".format(self.socketusernames[socket]))
-            self.currentuserstatus[socket] = ("sendtoall", None) 
+            self.log_message(f" User {self.socketusernames[socket]} entered /SENDALL")
+            self.currentuserstatus[socket] = ("sendtoall", None)
             self.send(socket, "Enter your message to broadcast:")
         elif command == "/PM" or command == "/PM/":
-            print(" User {} entered /PM".format(self.socketusernames[socket]))
+            self.log_message(f" User {self.socketusernames[socket]} entered /PM")
             self.currentuserstatus[socket] = "enterreceiver"
             self.send(socket, "Enter the username of the receiver:")
         elif command == "/GROUPMESSAGE" or command == "/GROUPMESSAGE/":
-            print(" User {} entered /GROUPMESSAGE".format(self.socketusernames[socket]))
+            self.log_message(f" User {self.socketusernames[socket]} entered /GROUPMESSAGE")
             self.currentuserstatus[socket] = ("selectmembers", None)
             self.send(socket, "Enter the usernames of the recipients separated by commas (,):")
         elif command == "/CHANGEUSERNAME" or command == "/CHANGEUSERNAME/":
-            print(" User {} entered /CHANGEUSERNAME".format(self.socketusernames[socket]))
+            self.log_message(f" User {self.socketusernames[socket]} entered /CHANGEUSERNAME")
             self.currentuserstatus[socket] = "updateusername"
             self.send(socket, "Enter your new username:")
         elif command == "/HELP" or command == "/HELP/":
-            print(" User {} entered /HELP".format(self.socketusernames[socket]))
+            self.log_message(f" User {self.socketusernames[socket]} entered /HELP")
             self.send(socket, "---------------------------------------------------------------")
             self.send(socket, "/DISCONNECT: Terminate connection to the server")
             self.send(socket, "/USERS: Display all the connected users")
@@ -169,7 +162,7 @@ class MyServer(Server):
             self.send(socket, "/HELP: for more")
             self.send(socket, "---------------------------------------------------------------")
         else:
-            print(" User {} entered [invalid] command: {} ".format(self.socketusernames[socket], message))
+            self.log_message(f" User {self.socketusernames[socket]} entered [invalid] command: {message}")
             self.send(socket, "You entered an invalid command (see /HELP)")
 
     def onDisconnect(self, socket):
@@ -183,18 +176,43 @@ class MyServer(Server):
         if username:
             goodbye_message = f"Goodbye {username}, sad to see you go"
             self.send(socket, goodbye_message)
-            self.sendall(f"{username} has disconnected. Total users: {len(self.trackedsockets)}", exclude=socket)# I changed the totalconnectedusers to len(self.trackedsockets) 
-                #to fix a bug when using myclient.py (so it is different to the PDF's protocol design).
+            self.sendall(f"{username} has disconnected. Total users: {len(self.trackedsockets)}", exclude=socket)
             return False
         else:
-            print("A connection has been closed.")
+            self.log_message("A connection has been closed.")
             return False
+
+class ServerGUI:
+    def __init__(self, master):
+        self.master = master
+        self.master.title("Server Command Viewer")
+
+        self.text_area = scrolledtext.ScrolledText(self.master, wrap=tk.WORD, font=("Helvetica", 14))
+        self.text_area.pack(padx=10, pady=10, expand=True, fill=tk.BOTH)
+        self.text_area.config(state=tk.DISABLED)
+
+    def write_message(self, message):
+        """Display messages in the text area."""
+        self.text_area.config(state=tk.NORMAL)
+        self.text_area.insert(tk.END, message + "\n")
+        self.text_area.yview(tk.END)
+        self.text_area.config(state=tk.DISABLED)
+
+def start_server_gui(host, port):
+    root = tk.Tk()
+    gui = ServerGUI(root)
+
+    server = MyServer(gui)
+
+    server_thread = threading.Thread(target=server.start, args=(host, port), daemon=True)
+    server_thread.start()
+
+    root.mainloop()
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("python3 myserver.py localhost portnumber")
+        print("Usage: python3 myserver.py <IP> <Port>")
         sys.exit(1)
 
     host, port = sys.argv[1], int(sys.argv[2])
-    server = MyServer()
-    server.start(host, port)
+    start_server_gui(host, port)
