@@ -4,6 +4,9 @@ This Python Messaging Program allows multiple clients to connect to a central se
 
 <img width="1955" alt="Running Program" src="https://github.com/user-attachments/assets/f38d1db8-57b1-4b6e-b1ad-3ba50111469e">
 
+_*there was an issue where the number of users were not correvtly updated, this was due to starting the program incorrectly and has since been resolved_
+
+
 
 
 ## Table of Contents
