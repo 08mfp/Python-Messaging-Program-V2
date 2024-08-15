@@ -39,9 +39,10 @@ _*there was an issue where the number of users were not correvtly updated, this 
 │   ├── mainServerHub.py
 │   ├── serverGUI.py
 │   ├── serverInit.py
-│   └── extraClients.py
 ├── README.md
 └── runServer.py
+└── extraClients.py
+
 ```
 
 ## Requirements
