@@ -2,6 +2,10 @@
 
 This Python Messaging Program allows multiple clients to connect to a central server and exchange messages using a set of predefined commands. The program is built using Python and features a graphical user interface (GUI) created with `customtkinter`.
 
+<img width="1955" alt="Running Program" src="https://github.com/user-attachments/assets/f38d1db8-57b1-4b6e-b1ad-3ba50111469e">
+
+
+
 ## Table of Contents
 
 - [File Structure](#file-structure)
