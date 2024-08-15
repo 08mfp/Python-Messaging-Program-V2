@@ -1,86 +1,137 @@
 import tkinter as tk
-from tkinter import scrolledtext, messagebox
-from client import main
+from tkinter import messagebox
 import sys
+
+try:
+    import customtkinter as ctk
+    use_ctk = True
+except ImportError:
+    ctk = tk  # fallback to standard tkinter
+    use_ctk = False
+
+from client import main
 
 class ChatBotGUI:
     def __init__(self, master, ip, port):
         self.master = master
-        self.master.title("ChatBot Client")
-        self.master.geometry("800x1000")
-        self.master.resizable(False, False)
+        self.master.title("Messaging Program")
+        self.master.geometry("500x1000")
+        self.master.resizable(True, True)
 
-        self.text_area = scrolledtext.ScrolledText(self.master, wrap=tk.WORD, font=("Helvetica", 14))
-        self.text_area.pack(padx=10, pady=10, expand=True, fill=tk.BOTH)
-        self.text_area.config(state=tk.DISABLED)
+        self.top_button_frame = ctk.Frame(self.master) if not use_ctk else ctk.CTkFrame(self.master)
+        self.top_button_frame.pack(padx=10, pady=(10, 0), fill="x")
 
+        self.create_top_buttons()
 
-        input_frame = tk.Frame(self.master)
-        input_frame.pack(padx=10, pady=10, fill=tk.X)
+        self.text_area_frame = ctk.Frame(self.master, borderwidth=2, relief="solid") if not use_ctk else ctk.CTkFrame(self.master, border_width=2, border_color="white")
+        self.text_area_frame.pack(padx=10, pady=10, expand=True, fill="both")
 
+        self.text_area = tk.Text(self.text_area_frame, wrap="word", font=("Helvetica", 18), height=20) if not use_ctk else ctk.CTkTextbox(self.text_area_frame, wrap="word", font=("Helvetica", 18), height=20)
+        self.text_area.pack(padx=2, pady=2, expand=True, fill="both")
+        self.text_area.configure(state="disabled")
 
-        self.entry_field = tk.Entry(input_frame, font=("Helvetica", 12))
-        self.entry_field.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0, 10))
+        input_frame = ctk.Frame(self.master) if not use_ctk else ctk.CTkFrame(self.master)
+        input_frame.pack(padx=10, pady=10, fill="x")
+
+        self.entry_field = tk.Entry(
+            input_frame,
+            font=("Helvetica", 14),
+            relief="solid",
+            fg="black",
+            bg="white",
+            width=40
+        ) if not use_ctk else ctk.CTkEntry(
+            input_frame,
+            font=("Helvetica", 14),
+            border_width=3,
+            fg_color="white",
+            border_color="#0066CC",
+            text_color="black",
+            height=40
+        )
+        self.entry_field.pack(side="left", expand=True, fill="x", padx=(0, 10))
         self.entry_field.bind("<Return>", self.on_enter_pressed)
 
+        self.enter_button = tk.Button(
+            input_frame,
+            text="Enter",
+            font=("Helvetica", 14, "bold"),
+            command=self.on_enter_pressed,
+            height=2
+        ) if not use_ctk else ctk.CTkButton(
+            input_frame,
+            text="Enter",
+            font=("Helvetica", 14, "bold"),
+            command=self.on_enter_pressed,
+            height=40
+        )
+        self.enter_button.pack(side="right")
 
-        self.enter_button = tk.Button(input_frame, text="Enter", font=("Helvetica", 12), command=self.on_enter_pressed)
-        self.enter_button.pack(side=tk.RIGHT)
+        self.bottom_button_frame_top = ctk.Frame(self.master) if not use_ctk else ctk.CTkFrame(self.master)
+        self.bottom_button_frame_top.pack(padx=10, pady=(10, 0), anchor="s", fill="x")
 
-
-        self.button_frame = tk.Frame(self.master)
-        self.button_frame.pack(padx=10, pady=10, fill=tk.X)
+        self.bottom_button_frame_bottom = ctk.Frame(self.master) if not use_ctk else ctk.CTkFrame(self.master)
+        self.bottom_button_frame_bottom.pack(padx=10, pady=(10, 20), anchor="s", fill="x")
 
         self.create_command_buttons()
 
-        self.client = main(ip, port, self)  
+        self.client = main(ip, port, self)
         self.ready_for_messaging = False
         self.current_command = None
         self.ask_username()
 
+    def create_top_buttons(self):
+        """Create Disconnect and Help buttons for the top of the GUI."""
+        button_font = ("Helvetica", 16, "bold")
+
+        button_params = {
+            "font": button_font,
+            "height": 50,
+        }
+
+        self.disconnect_button = tk.Button(self.top_button_frame, text="Disconnect", bg="red", **button_params, command=self.disconnect) if not use_ctk else ctk.CTkButton(self.top_button_frame, text="Disconnect", fg_color="red", **button_params, command=self.disconnect)
+        self.disconnect_button.pack(side="left", padx=5, pady=5, expand=True, fill="x")
+
+        self.help_button = tk.Button(self.top_button_frame, text="Help", bg="green", **button_params, command=self.send_help_command) if not use_ctk else ctk.CTkButton(self.top_button_frame, text="Help", fg_color="green", **button_params, command=self.send_help_command)
+        self.help_button.pack(side="right", padx=5, pady=5, expand=True, fill="x")
+
     def create_command_buttons(self):
-        """Create larger, user-friendly buttons for each command."""
-        button_font = ("Helvetica", 12)
+        """Create Private Message, Group Message, Send to All, Change Username buttons."""
+        button_font = ("Helvetica", 16, "bold")
 
-        self.disconnect_button = tk.Button(self.button_frame, text="Disconnect", font=button_font, command=self.disconnect, height=2)
-        self.disconnect_button.pack(side=tk.LEFT, padx=5, pady=5, expand=True, fill=tk.X)
+        button_params = {
+            "font": button_font,
+            "height": 50,
+        }
 
-        self.help_button = tk.Button(self.button_frame, text="Help", font=button_font, command=self.send_help_command, height=2)
-        self.help_button.pack(side=tk.LEFT, padx=5, pady=5, expand=True, fill=tk.X)
+        self.pm_button = tk.Button(self.bottom_button_frame_top, text="Private Message", bg="#3399FF", **button_params, command=self.pm_command) if not use_ctk else ctk.CTkButton(self.bottom_button_frame_top, text="Private Message", fg_color="#3399FF", **button_params, command=self.pm_command)
+        self.pm_button.pack(side="left", padx=5, pady=5, expand=True, fill="x")
 
-        self.users_button = tk.Button(self.button_frame, text="Users", font=button_font, command=self.send_users_command, height=2)
-        self.users_button.pack(side=tk.LEFT, padx=5, pady=5, expand=True, fill=tk.X)
+        self.group_message_button = tk.Button(self.bottom_button_frame_top, text="Group Message", bg="#3399FF", **button_params, command=self.group_message_command) if not use_ctk else ctk.CTkButton(self.bottom_button_frame_top, text="Group Message", fg_color="#3399FF", **button_params, command=self.group_message_command)
+        self.group_message_button.pack(side="left", padx=5, pady=5, expand=True, fill="x")
 
-        self.pm_button = tk.Button(self.button_frame, text="Private Message", font=button_font, command=self.pm_command, height=2)
-        self.pm_button.pack(side=tk.LEFT, padx=5, pady=5, expand=True, fill=tk.X)
+        self.sendall_button = tk.Button(self.bottom_button_frame_top, text="Send to All", bg="#3399FF", **button_params, command=self.send_sendall_command) if not use_ctk else ctk.CTkButton(self.bottom_button_frame_top, text="Send to All", fg_color="#3399FF", **button_params, command=self.send_sendall_command)
+        self.sendall_button.pack(side="left", padx=5, pady=5, expand=True, fill="x")
 
-        self.group_message_button = tk.Button(self.button_frame, text="Group Message", font=button_font, command=self.group_message_command, height=2)
-        self.group_message_button.pack(side=tk.LEFT, padx=5, pady=5, expand=True, fill=tk.X)
+        self.users_button = tk.Button(self.bottom_button_frame_bottom, text="Users", bg="orange", **button_params, command=self.send_users_command) if not use_ctk else ctk.CTkButton(self.bottom_button_frame_bottom, text="Users", fg_color="orange", **button_params, command=self.send_users_command)
+        self.users_button.pack(side="left", padx=5, pady=5, expand=True, fill="x")
 
-        self.sendall_button = tk.Button(self.button_frame, text="Send to All", font=button_font, command=self.send_sendall_command, height=2)
-        self.sendall_button.pack(side=tk.LEFT, padx=5, pady=5, expand=True, fill=tk.X)
-
-        self.change_username_button = tk.Button(self.button_frame, text="Change Username", font=button_font, command=self.change_username, height=2)
-        self.change_username_button.pack(side=tk.LEFT, padx=5, pady=5, expand=True, fill=tk.X)
+        self.change_username_button = tk.Button(self.bottom_button_frame_bottom, text="Change Username", bg="orange", **button_params, command=self.change_username) if not use_ctk else ctk.CTkButton(self.bottom_button_frame_bottom, text="Change Username", fg_color="orange", **button_params, command=self.change_username)
+        self.change_username_button.pack(side="left", padx=5, pady=5, expand=True, fill="x")
 
     def ask_username(self):
         """Ask for the username within the same GUI window."""
-        self.display_message("Please enter your username:")
         self.show_entry_widgets()
-        self.ready_for_messaging = False 
+        self.ready_for_messaging = False
 
     def on_enter_pressed(self, event=None):
         """Handle Enter button press or Return key press."""
         message = self.entry_field.get()
-        self.entry_field.delete(0, tk.END)
+        self.entry_field.delete(0, "end")
 
-        if not self.ready_for_messaging: 
+        if not self.ready_for_messaging:
             self.client.setupuser(message)
             self.ready_for_messaging = True
-        # elif self.current_command == "/PM":
-        #     self.handle_private_message(message)
-        # elif self.current_command == "/GROUPMESSAGE":
-        #     self.handle_group_message(message)
         else:
             self.send_message(str(message))
 
@@ -91,15 +142,15 @@ class ChatBotGUI:
 
     def display_message(self, message):
         """Display messages in the text area."""
-        self.text_area.config(state=tk.NORMAL)
-        self.text_area.insert(tk.END, message + "\n")
-        self.text_area.yview(tk.END)
-        self.text_area.config(state=tk.DISABLED)
+        self.text_area.configure(state="normal")
+        self.text_area.insert("end", message + "\n")
+        self.text_area.yview("end")
+        self.text_area.configure(state="disabled")
 
     def show_entry_widgets(self):
         """Show the entry field and Enter button."""
-        self.entry_field.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0, 10))
-        self.enter_button.pack(side=tk.RIGHT)
+        self.entry_field.pack(side="left", expand=True, fill="x", padx=(0, 10))
+        self.enter_button.pack(side="right")
 
     def hide_entry_widgets(self):
         """Hide the entry field and Enter button."""
@@ -117,33 +168,10 @@ class ChatBotGUI:
     def pm_command(self):
         self.current_command = None
         self.send_message("/PM")
-        # self.display_message("Enter the username of the recipient and then the message.")
-
-    def handle_private_message(self, message):
-        """Handles private messaging logic."""
-        self.current_command = None
-        self.send_message("/PM")
-        # if "@" not in message:
-        #     self.display_message("Please use the format @username message to send a private message.")
-        #     return
-        # recipient, msg = message.split("@", 1)[1].strip().split(" ", 1)
-        # self.send_message(f"/PM {recipient} {msg}")
-        # self.current_command = None  # Reset the command state
 
     def group_message_command(self):
         self.current_command = None
         self.send_message("/GROUPMESSAGE")
-        # self.current_command = "/GROUPMESSAGE"
-        # self.display_message("Enter the usernames of the recipients (comma-separated) followed by the message.")
-
-    # def handle_group_message(self, message):
-    #     """Handles group messaging logic."""
-    #     if ":" not in message:
-    #         self.display_message("Please use the format username1, username2: message to send a group message.")
-    #         return
-    #     recipients, msg = message.split(":", 1)
-    #     self.send_message(f"/GROUPMESSAGE {recipients.strip()} {msg.strip()}")
-    #     self.current_command = None  # Reset the command state
 
     def send_sendall_command(self):
         self.current_command = None
@@ -165,7 +193,14 @@ class ChatBotGUI:
             self.master.destroy()
 
 def run_gui(ip, port):
-    root = tk.Tk()
+    try:
+        if use_ctk:
+            ctk.set_appearance_mode("Dark")
+            ctk.set_default_color_theme("dark-blue")
+    except AttributeError:
+        pass
+
+    root = ctk.CTk() if use_ctk else tk.Tk()
     chat_gui = ChatBotGUI(root, ip, port)
     root.protocol("WM_DELETE_WINDOW", chat_gui.on_closing)
     root.mainloop()

@@ -4,6 +4,15 @@ import tkinter as tk
 from tkinter import scrolledtext
 import threading
 
+try:
+    import customtkinter as ctk
+except ImportError:
+    ctk = tk
+
+ctk.set_appearance_mode("System")  # Modes: "System" (default), "Dark", "Light"
+ctk.set_default_color_theme("blue")  # Themes: "blue" (default), "green", "dark-blue"
+
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from Server.serverInit import Server
 
@@ -57,7 +66,7 @@ class MyServer(Server):
                 self.notregistered.remove(socket)
                 self.totalconnectedusers += 1
                 self.send(socket, "Welcome {}. Total users: {} ".format(usernameinput, len(self.trackedsockets)))
-                self.send(socket, "Available commands: /DISCONNECT, /USERS, /SENDALL, /PM, /GROUPMESSAGE, /CHANGEUSERNAME, /HELP\n")
+                # self.send(socket, "Available commands: /DISCONNECT, /USERS, /SENDALL, /PM, /GROUPMESSAGE, /CHANGEUSERNAME, /HELP\n")
                 self.send(socket, "You can now start chatting: ")
                 self.sendall("{} joined the chat. Total users: {}".format(usernameinput, len(self.trackedsockets)), exclude=socket)
         elif socket in self.currentuserstatus and self.currentuserstatus[socket] == "enterreceiver":
@@ -187,26 +196,44 @@ class ServerGUI:
         self.master = master
         self.master.title("Server Command Viewer")
 
-        self.text_area = scrolledtext.ScrolledText(self.master, wrap=tk.WORD, font=("Helvetica", 14))
-        self.text_area.pack(padx=10, pady=10, expand=True, fill=tk.BOTH)
-        self.text_area.config(state=tk.DISABLED)
+        # Set the background color to black
+        self.master.configure(bg="#404040")  # Black background
+
+        # Create a frame with a green border around the main area
+        self.frame = ctk.CTkFrame(self.master, fg_color="#404040", border_width=2, border_color="green")
+        self.frame.pack(padx=10, pady=10, expand=True, fill="both")
+
+        # Create a modern and stylish text area with larger bold green text
+        self.text_area = ctk.CTkTextbox(
+            self.frame,
+            wrap="word",
+            font=("Helvetica", 16, "bold"),  # Larger and bold text
+            text_color="green",  # Green text color
+            fg_color="#000000",  # Dark gray background color for the text area
+            width=400,
+            height=800
+        )
+        self.text_area.pack(padx=10, pady=10, expand=True, fill="both")
+        self.text_area.configure(state="disabled")
 
     def write_message(self, message):
         """Display messages in the text area."""
-        self.text_area.config(state=tk.NORMAL)
-        self.text_area.insert(tk.END, message + "\n")
-        self.text_area.yview(tk.END)
-        self.text_area.config(state=tk.DISABLED)
+        self.text_area.configure(state="normal")
+        self.text_area.insert("end", message + "\n")
+        self.text_area.yview("end")
+        self.text_area.configure(state="disabled")
 
 def start_server_gui(host, port):
-    root = tk.Tk()
+    root = ctk.CTk()  # Use customtkinter's CTk or fallback to Tk
     gui = ServerGUI(root)
 
-    server = MyServer(gui)
+    server = MyServer(gui)  # Pass the GUI instance to the server
 
+    # Start the server in a separate thread
     server_thread = threading.Thread(target=server.start, args=(host, port), daemon=True)
     server_thread.start()
 
+    # Run the GUI main loop
     root.mainloop()
 
 if __name__ == "__main__":

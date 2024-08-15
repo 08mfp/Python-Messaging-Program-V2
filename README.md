@@ -1,95 +1,116 @@
+# Python Messaging Program
 
-# Network Server and Client
+This Python Messaging Program allows multiple clients to connect to a central server and exchange messages using a set of predefined commands. The program is built using Python and features a graphical user interface (GUI) created with `customtkinter`.
 
-This project demonstrates a basic network server and client implementation in Python. The server listens on a specified IP address and TCP port, handling incoming messages from multiple clients. Clients can connect to the server, send messages, and interact with other connected clients using a variety of commands.
+## Table of Contents
+
+- [File Structure](#file-structure)
+- [Requirements](#requirements)
+- [Setup Instructions](#setup-instructions)
+  - [Step 1: Navigate to the Root Directory](#step-1-navigate-to-the-root-directory)
+  - [Step 2: Create a Virtual Environment](#step-2-create-a-virtual-environment)
+    - [On macOS](#on-macos)
+    - [On Windows](#on-windows)
+  - [Step 3: Install `customtkinter`](#step-3-install-customtkinter)
+- [Running the Program](#running-the-program)
+  - [To Run the Server and the First Messaging Client](#to-run-the-server-and-the-first-messaging-client)
+  - [To Run Additional Clients](#to-run-additional-clients)
+- [Features](#features)
+  - [Server](#server)
+  - [Client](#client)
+- [Available Commands](#available-commands)
+
+## File Structure
+
+```
+.
+├── Client
+│   ├── client.py
+│   └── userGUI.py
+├── Server
+│   ├── baseServer.py
+│   ├── mainServerHub.py
+│   ├── serverGUI.py
+│   ├── serverInit.py
+│   └── extraClients.py
+├── README.md
+└── runServer.py
+```
+
+## Requirements
+
+- Python 3.x
+- `customtkinter` library
+
+## Setup Instructions
+
+### Step 1: Navigate to the Root Directory
+
+Open your terminal and navigate to the root directory of the project.
+
+### Step 2: Create a Virtual Environment
+
+#### On macOS:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+#### On Windows:
+```cmd
+python -m venv venv
+venv\Scripts\activate
+```
+
+### Step 3: Install `customtkinter`
+
+With your virtual environment activated, install the required library:
+
+```bash
+pip install customtkinter
+```
+
+## Running the Program
+
+### To Run the Server and the First Messaging Client
+
+1. **Ensure your virtual environment is activated** (refer to Step 2).
+2. Run the following command to start the server and the first client:
+
+   ```bash
+   python3 runServer.py
+   ```
+
+### To Run Additional Clients
+
+1. **Ensure your virtual environment is activated** (refer to Step 2).
+2. Open a new terminal window in the root directory.
+3. Run the following command to start an additional client:
+
+   ```bash
+   python3 extraClients.py
+   ```
 
 ## Features
 
-- **Server**:
-  - Listens for client connections and handles messages.
-  - Provides hooks for handling events such as connection, disconnection, and message reception.
-  - Supports multiple clients simultaneously.
+### Server
+- Listens for client connections and handles messages.
+- Provides hooks for handling events such as connection, disconnection, and message reception.
+- Supports multiple clients simultaneously.
 
-- **Client**:
-  - Connects to the server and communicates with it using a set of predefined commands.
-  - Allows private messaging, group messaging, and broadcasting messages to all connected clients.
-  - Supports changing the username and retrieving the list of connected users.
+### Client
+- Connects to the server and communicates using a set of predefined commands.
+- Allows private messaging, group messaging, and broadcasting messages to all connected clients.
+- Supports changing the username and retrieving the list of connected users.
 
-## Usage
+## Available Commands
 
-### Running the Server
+Clients can use the following commands to interact with the server and other users:
 
-To start the server, use the following command:
-
-```bash
-python3 myserver.py <IP> <Port>
-```
-
-For example:
-
-```bash
-python3 myserver.py localhost 7090
-```
-
-### Running the Client
-
-To connect to the server using the client, run the following command in a new terminal:
-
-```bash
-python3 myclient.py <IP> <Port>
-```
-
-For example:
-
-```bash
-python3 myclient.py localhost 7090
-```
-
-### Typical Client Usage
-
-1. **Username Setup**: When you start the client, you'll be prompted to enter a username. If the username is already in use, you'll need to choose a different one.
-2. **Messaging**: Once your username is set, you can start sending messages using the following commands:
-
-   - `/DISCONNECT` - Disconnect from the server.
-   - `/HELP` - Display a list of available commands.
-   - `/USERS` - List all currently connected users.
-   - `/PM <username>` - Send a private message to a specific user.
-   - `/GROUPMESSAGE <username1, username2, ...>` - Send a message to a group of users.
-   - `/SENDALL` - Send a message to all users (including the server).
-   - `/CHANGEUSERNAME <new_username>` - Change your username.
-
-3. **Connecting Multiple Clients**: You can run multiple instances of the client in separate terminals, each connecting with a unique username.
-4. **Disconnecting**: To disconnect, use the `/DISCONNECT` command. The client will then exit.
-
-### Telnet Connection
-
-You can also use `telnet` to connect to the server:
-
-```bash
-telnet localhost <Port>
-```
-
-For example:
-
-```bash
-telnet localhost 7090
-```
-
-### Additional Information
-
-- Commands are not case-sensitive (`/sendall` or `/SENDALL` are both valid).
-- The server displays all messages and commands entered by clients.
-- **Note**: Pressing `Ctrl + ]` and `Ctrl + Z` in a telnet client suspends it without disconnecting from the server. Use the `/DISCONNECT` command to properly terminate the connection.
-
-## Testing
-
-To test the implementation:
-
-1. Start the server in a terminal.
-2. Connect multiple clients from separate terminals using different usernames.
-3. Use the available commands to interact between clients and the server.
-4. Test private messaging, group messaging, and broadcasting.
-5. Verify that the `/USERS` command lists all connected clients.
-6. Change usernames using `/CHANGEUSERNAME` and verify the changes.
-7. Disconnect all clients using `/DISCONNECT`.
-8. Stop the server by pressing `Ctrl + C` twice in the server terminal.
+- **/DISCONNECT**: Disconnect from the server.
+- **/HELP**: Display a list of available commands.
+- **/USERS**: List all currently connected users.
+- **/PM <username>**: Send a private message to a specific user.
+- **/GROUPMESSAGE <username1, username2, ...>**: Send a message to a group of users.
+- **/SENDALL**: Send a message to all users (including the server).
+- **/CHANGEUSERNAME <new_username>**: Change your username.
